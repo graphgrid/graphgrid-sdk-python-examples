@@ -3,10 +3,11 @@ import time
 from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
 from graphgrid_sdk.ggcore.sdk_messages import GetJobStatusResponse, \
     JobTrainResponse, SaveDatasetResponse, GetJobResultsResponse, PromoteModelResponse
+from graphgrid_sdk.ggcore.training_request_body import TrainRequestBody
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 
-# stream dataset in
+# Stream dataset in
 def read_by_line():
     infile = open(
         "dataset_example.jsonl",
@@ -17,7 +18,7 @@ def read_by_line():
 
 DAG_ID = "nlp_model_training"
 
-# setup bootstrap config
+# Setup bootstrap config
 bootstrap_conf = SdkBootstrapConfig(
     access_key='a3847750f486bd931de26c6e683b1dc4',
     secret_key='81a62cea53883f4a163a96355d47656e',
@@ -27,16 +28,15 @@ bootstrap_conf = SdkBootstrapConfig(
 # Initialize the SDK
 sdk = GraphGridSdk(bootstrap_conf)
 
-# save training dataset (streamed)
+# Save training dataset (streamed)
 dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line(),
                                                          "sample-dataset",
                                                          overwrite=True)
 
 # Train a new model
-training_request_body = {"model": "named-entity-recognition",
-                         "datasets": "sample-dataset.jsonl",
-                         "no_cache": False,
-                         "GPU": False}
+training_request_body: TrainRequestBody = TrainRequestBody(model="named-entity-recognition",
+                                                           datasets="sample-dataset.jsonl",
+                                                           no_cache=False, GPU=False)
 train_response: JobTrainResponse = sdk.job_train(training_request_body, DAG_ID)
 
 # Track training job status
@@ -48,6 +48,9 @@ while job_status.state != "success" and job_status.state != "failed":
     job_status: GetJobStatusResponse = sdk.get_job_status(DAG_ID,
                                                           train_response.dag_run_id)
 
+if job_status.state == "failed":
+    raise Exception("Dag failed: ", job_status.exception)
+
 # Training has finished
 print("Dag training/eval/model upload has finished.")
 
@@ -56,8 +59,9 @@ job_results: GetJobResultsResponse = sdk.get_job_results(DAG_ID,
                                                          train_response.dag_run_id)
 
 # Promote updated model
+# todo: add check for whether this model is better than currently loaded model
 promote_model_response: PromoteModelResponse = \
-      sdk.promote_model(job_results.saved_model_name, "named-entity-recognition")
+    sdk.promote_model(job_results.saved_model_name, "named-entity-recognition")
 
 # Promotion is complete
 print("Model has been promoted.")
