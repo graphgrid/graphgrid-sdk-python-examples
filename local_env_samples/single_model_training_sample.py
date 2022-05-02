@@ -1,8 +1,8 @@
 import time
 
 from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
-from graphgrid_sdk.ggcore.sdk_messages import GetJobStatusResponse, \
-    JobTrainResponse, SaveDatasetResponse, GetJobResultsResponse, PromoteModelResponse
+from graphgrid_sdk.ggcore.sdk_messages import NMTStatusResponse, \
+    NMTTrainResponse, SaveDatasetResponse, PromoteModelResponse
 from graphgrid_sdk.ggcore.training_request_body import TrainRequestBody
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
@@ -15,8 +15,6 @@ def read_by_line():
     for line in infile:
         yield line.encode()
 
-
-DAG_ID = "nlp_model_training"
 
 # Setup bootstrap config
 bootstrap_conf = SdkBootstrapConfig(
@@ -37,31 +35,25 @@ dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line(),
 training_request_body: TrainRequestBody = TrainRequestBody(model="named-entity-recognition",
                                                            datasets="sample-dataset.jsonl",
                                                            no_cache=False, GPU=False)
-train_response: JobTrainResponse = sdk.job_train(training_request_body, DAG_ID)
+train_response: NMTTrainResponse = sdk.nmt_train(training_request_body)
 
-# Track training job status
-job_status: GetJobStatusResponse = sdk.get_job_status(DAG_ID,
-                                                      train_response.dag_run_id)
-while job_status.state != "success" and job_status.state != "failed":
+# Track training status
+nmt_status: NMTStatusResponse = sdk.nmt_status(train_response.dagRunId)
+while nmt_status.state != "success" and nmt_status.state != "failed":
     print("...running dag...")
     time.sleep(10)
-    job_status: GetJobStatusResponse = sdk.get_job_status(DAG_ID,
-                                                          train_response.dag_run_id)
+    nmt_status: NMTStatusResponse = sdk.nmt_status(train_response.dagRunId)
 
-if job_status.state == "failed":
-    raise Exception("Dag failed: ", job_status.exception)
+if nmt_status.state == "failed":
+    raise Exception("Dag failed: ", nmt_status.exception)
 
 # Training has finished
 print("Dag training/eval/model upload has finished.")
 
-# Get training job results
-job_results: GetJobResultsResponse = sdk.get_job_results(DAG_ID,
-                                                         train_response.dag_run_id)
-
 # Promote updated model
 # todo: add check for whether this model is better than currently loaded model
 promote_model_response: PromoteModelResponse = \
-    sdk.promote_model(job_results.saved_model_name, "named-entity-recognition")
+    sdk.promote_model(nmt_status.savedModelName, "named-entity-recognition")
 
 # Promotion is complete
 print("Model has been promoted.")

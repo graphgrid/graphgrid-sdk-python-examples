@@ -15,8 +15,6 @@ def read_by_line():
         yield line.encode()
 
 
-DAG_ID = "nlp_model_training"
-
 # List all models available in the dataset to be trained
 models_to_train = ["translation", "sentiment-binary", "sentiment-categorical", "keyphrase-extraction",
                    "named-entity-recognition", "pos-tagging", "relation-extraction", "coreference-resolution"]
@@ -43,43 +41,37 @@ for model in models_to_train:
     train_request_bodies.append(
         TrainRequestBody(model=model, datasets="sample-dataset.jsonl", no_cache=False, GPU=False))
 
-job_train_responses = []
+nmt_train_responses = []
 for i in range(num_models):
-    job_train_responses.append(sdk.job_train(train_request_bodies[i], DAG_ID))
-    time.sleep(2)  # a temp directory is created for each job with name based on timestamp.
-    # This sleep ensures each job has its own temp directory
+    nmt_train_responses.append(sdk.nmt_train(train_request_bodies[i]))
+    time.sleep(2)  # a temp directory is created for each run with name based on timestamp.
+    # This sleep ensures each run has its own temp directory
 
-# Track training job status
-job_status_responses = []
+# Track training status
+nmt_status_responses = []
 for i in range(num_models):
-    job_status_responses.append((sdk.get_job_status(DAG_ID, job_train_responses[i].dag_run_id)))
+    nmt_status_responses.append((sdk.nmt_status(nmt_train_responses[i].dagRunId)))
 
 completed_runs = 0
 while completed_runs < num_models:
     print("...running dag...")
     time.sleep(10)
-    for status in job_status_responses:
+    for status in nmt_status_responses:
         if status.state != "success" and status.state != "failed":
-            status_idx = job_status_responses.index(status)
-            job_status_responses[status_idx] = sdk.get_job_status(DAG_ID,
-                                                                  job_train_responses[status_idx].dag_run_id)
-            if job_status_responses[status_idx].state == "success" or \
-                    job_status_responses[status_idx].state == "failed":
+            status_idx = nmt_status_responses.index(status)
+            nmt_status_responses[status_idx] = sdk.nmt_status(nmt_train_responses[status_idx].dagRunId)
+            if nmt_status_responses[status_idx].state == "success" or \
+                    nmt_status_responses[status_idx].state == "failed":
                 completed_runs = completed_runs + 1
 
 # Training has finished
 print("Dag training/eval/model upload has finished.")
 
-# Get training job results
-job_results_responses = []
-for i in range(num_models):
-    job_results_responses.append(sdk.get_job_results(DAG_ID, job_train_responses[i].dag_run_id))
-
 # Promote updated models
 for i in range(num_models):
-    if job_results_responses[i].state == "success":
+    if nmt_status_responses[i].state == "success":
         # todo: add check for whether this model is better than currently loaded model
-        sdk.promote_model(job_results_responses[i].saved_model_name, models_to_train[i])
+        sdk.promote_model(nmt_status_responses[i].savedModelName, models_to_train[i])
 
 # Promotion is complete
 print("Models have been promoted.")
