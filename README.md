@@ -16,7 +16,13 @@ Download CDP version 2.0 from https://www.graphgrid.com/cdp-downloads/
 and visit https://docs.graphgrid.com/2.0/#/ for more information.
 
 
-# Setup a DAG in python
+# Write a DAG in python
+Now we must write our own custom DAG in python. 
+We use the GraphGridDockerOperator as the base of our DAG. 
+```python
+
+
+```
 
 # Setup a dockerfile
 
@@ -34,6 +40,8 @@ With our DAG image built we now need to upload it to Airflow.
 ```bash
 graphgrid airflow upload </path/to/DAG.py>
 ```
+
+_Airflow may take up to 1 minute to add new DAGs to the Webserver UI._
 
 # Kick off your DAG
 We can start training NLP models!
