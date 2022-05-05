@@ -24,9 +24,42 @@ and visit https://docs.graphgrid.com/2.0/#/ for more information.
 We need to build a docker image based on our dockerfile. 
 This image is what Airflow uses when the DAG is triggered.   
 
-# Upload the DAG
-With our DAG image built we now need to upload it to Airflow.  
+```bash
+docker build -t sdk-tutorial -f sdk_tutorial.dockerfile .
+```
 
-# Kick off DAG
-We can start training NLP models! 
-We'll kick off the DAG using our GraphGrid SDK, but it is possible to trigger manually on the browser.
+# Upload your DAG
+With our DAG image built we now need to upload it to Airflow.
+
+```bash
+graphgrid airflow upload </path/to/DAG.py>
+```
+
+# Kick off your DAG
+We can start training NLP models!
+We'll show off two ways to trigger our DAG, either with the GraphGrid SDK or directly on the Airflow browser.
+
+### SDK
+You can trigger a directly through the GraphGrid SDK.
+
+```python
+
+import graphgrid-sdk
+
+sdk = GraphGridSdk(SdkBootstrapConfig(
+    access_key='abc123',
+    secret_key='xyz123',
+    url_base="localhost")
+)
+
+sdk.job_run( dag_id="custom-dag", request_body={})
+```
+
+
+
+### Airflow Browser
+You can also trigger a DAG by going to your local Airflow browser (CDP defaults this to `localhost:8081`
+and signing in with username/password `airflow`.
+
+From the home screen you should see your custom DAG and the `nlp-model-training` DAG. 
+You can manually trigger your custom DAG by hitting the green arrow under the `Actions` column. 
