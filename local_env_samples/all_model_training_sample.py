@@ -2,7 +2,7 @@ import time
 
 from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
 from graphgrid_sdk.ggcore.sdk_messages import SaveDatasetResponse
-from graphgrid_sdk.ggcore.training_request_body import TrainRequestBody
+from graphgrid_sdk.ggcore.sdk_messages import TrainRequestBody
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 
