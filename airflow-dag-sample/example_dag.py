@@ -8,27 +8,21 @@ from graphgrid_provider.operators.graphgrid_docker import \
 
 
 DOCKER_URL = "tcp://socat:2375"
+SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
+dataset_filepath = 'dataset_example.jsonl'
+dataset_name = 'sample_dataset'
+models_to_train = '["named-entity-recognition", "pos-tagging"]'
+success_handler = 'null'
+failed_handler = 'null'
 
 
 def read_by_line():
     infile = open(
-        "../dataset_example.jsonl",
+        dataset_filepath,
         'r', encoding='utf8')
     for line in infile:
         yield line.encode()
 
-
-# DAG_ID = "nlp_model_training"
-
-# sdk = GraphGridSdk(SdkBootstrapConfig(
-#     access_key='a3847750f486bd931de26c6e683b1dc4',
-#     secret_key='81a62cea53883f4a163a96355d47656e',
-#     url_base='localhost',
-#     is_docker_context=False))
-
-# training_request_body: TrainRequestBody = TrainRequestBody(model="named-entity-recognition",
-#                                                            datasets="sample-dataset.jsonl",
-#                                                            no_cache=False, gpu=False)
 
 default_args = {
     'owner': 'GraphGrid',
@@ -76,51 +70,38 @@ def delete_volume(claim_name: str) -> None:
 t_create_volume = PythonOperator(python_callable=create_volume,
                                  task_id='create_volume', dag=dag)
 
-t_0 = GraphGridDockerOperator(task_id='configure_sdk',
-                              dag=dag,
-                              mounts=[GraphgridMount(target="/config/", source="{{ ti.xcom_pull(task_ids='create_volume') }}")],
-                              image="graphgrid-sdk-python-examples",
-                              command=["configure_sdk",
-                                       "--access_key", 'a3847750f486bd931de26c6e683b1dc4',
-                                       "--secret_key", '81a62cea53883f4a163a96355d47656e',
-                                       "--url_base", "localhost",
-                                       "--is_docker_context", True],
-                              auto_remove=True,
-                              do_xcom_push=True
-                              )
-
 t_1 = GraphGridDockerOperator(task_id='save_dataset',
                               dag=dag,
-                              mounts=[GraphgridMount(target="/config/", source="{{ ti.xcom_pull(task_ids='create_volume') }}")],
+                              mounts=[GraphgridMount(target="/config/", source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
                               command=["save_dataset",
-                                       "--sdk", "{{ ti.xcom_pull(task_ids='configure_sdk') }}",
-                                       "--read_by_line", read_by_line(),
-                                       "--dataset_name", "sample-dataset",
-                                       "--overwrite", False],
+                                       "--dataset_filepath", dataset_filepath,
+                                       "--dataset_name", dataset_name,
+                                       "--overwrite", 'false'],
                               auto_remove=True,
                               )
 
 t_2 = GraphGridDockerOperator(task_id='train_and_promote',
                               dag=dag,
-                              mounts=[GraphgridMount(target="/config/", source="{{ ti.xcom_pull(task_ids='create_volume') }}")],
+                              mounts=[GraphgridMount(target="/config/", source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
-                              command=["start_training",
-                                       "--sdk", "{{ ti.xcom_pull(task_ids='configure_sdk') }}",
-                                       "--model_type", "named-entity-recognition",
-                                       "--datasets", "sample-dataset.jsonl",
-                                       "--no_cache", False,
-                                       "--gpu", False],
+                              command=["train_and_promote",
+                                       "--models_to_train", models_to_train,
+                                       "--datasets", dataset_name + '.jsonl',
+                                       "--no_cache", 'false',
+                                       "--gpu", 'false',
+                                       "--autopromote", 'true',
+                                       "--success_handler", success_handler,
+                                       "--failed_handler", failed_handler],
                               auto_remove=True,
                               )
 
 t_delete_volume = PythonOperator(python_callable=delete_volume,
                                  task_id='delete_volume',
-                                 dag=dag, op_kwargs={"claim_name": "{{ ti.xcom_pull(task_ids='create_volume') }}"},
+                                 dag=dag, op_kwargs={"claim_name": SOURCE},
                                  trigger_rule="all_done")
 
-t_0.set_upstream(t_create_volume)
-t_1.set_upstream(t_0)
+t_1.set_upstream(t_create_volume)
 t_2.set_upstream(t_1)
 t_delete_volume.set_upstream(t_2)
 

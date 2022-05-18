@@ -1,3 +1,5 @@
+import time
+
 import fire
 import typing
 from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
@@ -7,15 +9,21 @@ from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 class Pipeline:
 
-    def configure_sdk(self, access_key, secret_key, url_base, is_docker_context):
-        conf = SdkBootstrapConfig(
-            access_key=access_key,
-            secret_key=secret_key,
-            url_base=url_base,
-            is_docker_context=is_docker_context)
-        return GraphGridSdk(conf)
+    def save_dataset(self, dataset_filepath: str, dataset_name: str, overwrite: bool):
+        sdk = GraphGridSdk(SdkBootstrapConfig(
+            access_key='a3847750f486bd931de26c6e683b1dc4',
+            secret_key='81a62cea53883f4a163a96355d47656e',
+            url_base='localhost',
+            is_docker_context=True))
 
-    def save_dataset(self, sdk: GraphGridSdk, read_by_line: callable, dataset_name: str, overwrite: bool):
+        def read_by_line(dataset_filepath):
+            infile = open(
+                dataset_filepath,
+                'r', encoding='utf8')
+            for line in infile:
+                yield line.encode()
+
+        read_by_line = read_by_line(dataset_filepath)
         dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line,
                                                                  dataset_name,
                                                                  overwrite)
@@ -23,9 +31,14 @@ class Pipeline:
             raise Exception("Failed to save dataset: ", dataset_response.exception)
 
 
-    def train_and_promote(self, sdk: GraphGridSdk, models_to_train: list, datasets: typing.Union[str, list],
+    def train_and_promote(self, models_to_train: list, datasets: typing.Union[str, list],
                           no_cache: typing.Optional[bool], gpu: typing.Optional[bool], autopromote: bool,
                           success_handler: typing.Optional[callable], failed_handler: typing.Optional[callable]):
+        sdk = GraphGridSdk(SdkBootstrapConfig(
+            access_key='a3847750f486bd931de26c6e683b1dc4',
+            secret_key='81a62cea53883f4a163a96355d47656e',
+            url_base='localhost',
+            is_docker_context=True))
         sdk.nmt_train_pipeline(models_to_train, datasets, no_cache, gpu, autopromote, success_handler, failed_handler)
 
 
