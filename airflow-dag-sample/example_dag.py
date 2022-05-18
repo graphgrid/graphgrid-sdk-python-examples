@@ -12,8 +12,6 @@ SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
 dataset_filepath = 'dataset_example.jsonl'
 dataset_name = 'sample_dataset'
 models_to_train = '["named-entity-recognition", "pos-tagging"]'
-success_handler = 'null'
-failed_handler = 'null'
 
 
 def read_by_line():
@@ -90,9 +88,7 @@ t_2 = GraphGridDockerOperator(task_id='train_and_promote',
                                        "--datasets", dataset_name + '.jsonl',
                                        "--no_cache", 'false',
                                        "--gpu", 'false',
-                                       "--autopromote", 'true',
-                                       "--success_handler", success_handler,
-                                       "--failed_handler", failed_handler],
+                                       "--autopromote", 'true'],
                               auto_remove=True,
                               )
 
