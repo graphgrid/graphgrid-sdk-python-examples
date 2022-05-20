@@ -10,7 +10,7 @@ DOCKER_URL = "tcp://socat:2375"
 SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
 dataset_filepath = 'dataset_example.jsonl'
 dataset_name = 'sample_dataset'
-models_to_train = '["named-entity-recognition", "pos-tagging"]'
+models_to_train = '["named_entity_recognition", "pos_tagging"]'
 
 
 def read_by_line():
