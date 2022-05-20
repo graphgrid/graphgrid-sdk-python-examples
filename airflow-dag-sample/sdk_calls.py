@@ -23,8 +23,8 @@ class Pipeline:
             for line in infile:
                 yield line.encode()
 
-        read_by_line = read_by_line(dataset_filepath)
-        dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line,
+        yield_function = read_by_line(dataset_filepath)
+        dataset_response: SaveDatasetResponse = sdk.save_dataset(yield_function,
                                                                  dataset_name,
                                                                  overwrite)
         if dataset_response.status_code != 200:
