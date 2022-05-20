@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
+
+from airflow import DAG
 from airflow.operators.python import PythonOperator
 from docker import APIClient
-from airflow import DAG
-
 from graphgrid_provider.operators.graphgrid_docker import \
     GraphGridDockerOperator, GraphgridMount
-
 
 DOCKER_URL = "tcp://socat:2375"
 SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
@@ -70,7 +69,8 @@ t_create_volume = PythonOperator(python_callable=create_volume,
 
 t_1 = GraphGridDockerOperator(task_id='save_dataset',
                               dag=dag,
-                              mounts=[GraphgridMount(target="/config/", source=SOURCE)],
+                              mounts=[GraphgridMount(target="/config/",
+                                                     source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
                               command=["save_dataset",
                                        "--dataset_filepath", dataset_filepath,
@@ -81,7 +81,8 @@ t_1 = GraphGridDockerOperator(task_id='save_dataset',
 
 t_2 = GraphGridDockerOperator(task_id='train_and_promote',
                               dag=dag,
-                              mounts=[GraphgridMount(target="/config/", source=SOURCE)],
+                              mounts=[GraphgridMount(target="/config/",
+                                                     source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
                               command=["train_and_promote",
                                        "--models_to_train", models_to_train,
@@ -100,5 +101,3 @@ t_delete_volume = PythonOperator(python_callable=delete_volume,
 t_1.set_upstream(t_create_volume)
 t_2.set_upstream(t_1)
 t_delete_volume.set_upstream(t_2)
-
-

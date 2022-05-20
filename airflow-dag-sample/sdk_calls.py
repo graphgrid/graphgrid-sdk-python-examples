@@ -9,7 +9,8 @@ from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 class Pipeline:
 
-    def save_dataset(self, dataset_filepath: str, dataset_name: str, overwrite: bool):
+    def save_dataset(self, dataset_filepath: str, dataset_name: str,
+                     overwrite: bool):
         sdk = GraphGridSdk(SdkBootstrapConfig(
             access_key='a3847750f486bd931de26c6e683b1dc4',
             secret_key='81a62cea53883f4a163a96355d47656e',
@@ -28,11 +29,13 @@ class Pipeline:
                                                                  dataset_name,
                                                                  overwrite)
         if dataset_response.status_code != 200:
-            raise Exception("Failed to save dataset: ", dataset_response.exception)
+            raise Exception("Failed to save dataset: ",
+                            dataset_response.exception)
 
-
-    def train_and_promote(self, models_to_train: list, datasets: typing.Union[str, list],
-                          no_cache: typing.Optional[bool], gpu: typing.Optional[bool], autopromote: bool):
+    def train_and_promote(self, models_to_train: list,
+                          datasets: typing.Union[str, list],
+                          no_cache: typing.Optional[bool],
+                          gpu: typing.Optional[bool], autopromote: bool):
         sdk = GraphGridSdk(SdkBootstrapConfig(
             access_key='a3847750f486bd931de26c6e683b1dc4',
             secret_key='81a62cea53883f4a163a96355d47656e',
@@ -45,7 +48,8 @@ class Pipeline:
         def failed_handler(args):
             return
 
-        sdk.nmt_train_pipeline(models_to_train, datasets, no_cache, gpu, autopromote, success_handler, failed_handler)
+        sdk.nmt_train_pipeline(models_to_train, datasets, no_cache, gpu,
+                               autopromote, success_handler, failed_handler)
 
 
 def main():
