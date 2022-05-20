@@ -1,4 +1,4 @@
-git+http://github.com/graphgrid/graphgrid-sdk-python@2.0-nmt-train-pipeline#egg=graphgrid-sdk
+graphgrid-sdk
 airflow-provider-graphgrid==2.0.0
 
 apache-airflow==2.2.2
