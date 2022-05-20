@@ -11,7 +11,7 @@ git clone https://github.com/graphgrid/graphgrid-sdk-python-examples.git
 # Start your Connected Data Platform (CDP)
 The next step is to start running a local CDP deployment.
 
-Download CDP version 2.0 from https://www.graphgrid.com/cdp-downloads/
+Download CDP ai-edition (version 2.0) from https://www.graphgrid.com/cdp-downloads/
 and visit https://docs.graphgrid.com/2.0/#/ for more information.
 
 # Build DAG docker image
