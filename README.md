@@ -19,7 +19,7 @@ We need to build a docker image based on our dockerfile.
 This image is what Airflow uses when the DAG is triggered.   
 
 ```bash
-docker build -t sdk-graphgrid-sdk-python-examples -f graphgrid-sdk-python-example.dockerfile .
+docker build -t graphgrid-sdk-python-examples .
 ```
 
 # Upload your DAG
