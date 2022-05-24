@@ -1,5 +1,5 @@
 graphgrid-sdk==2.0.0
-airflow-provider-graphgrid==2.0.0
+airflow-provider-graphgrid==2.0.1
 
 apache-airflow==2.2.2
 
