@@ -9,8 +9,8 @@ from graphgrid_provider.operators.graphgrid_docker import \
 DOCKER_URL = "tcp://socat:2375"
 SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
 dataset_filepath = 'dataset_example.jsonl'
-dataset_name = 'sample_dataset'
-models_to_train = '["named_entity_recognition", "pos_tagging"]'
+filename = 'sample_dataset'
+models_to_train = '["named_entity_recognition", "part_of_speech_tagging"]'
 
 
 def read_by_line():
@@ -74,8 +74,7 @@ t_1 = GraphGridDockerOperator(task_id='save_dataset',
                               image="graphgrid-sdk-python-examples",
                               command=["save_dataset",
                                        "--dataset_filepath", dataset_filepath,
-                                       "--dataset_name", dataset_name,
-                                       "--overwrite", 'false'],
+                                       "--filename", filename],
                               auto_remove=True,
                               )
 
@@ -86,7 +85,8 @@ t_2 = GraphGridDockerOperator(task_id='train_and_promote',
                               image="graphgrid-sdk-python-examples",
                               command=["train_and_promote",
                                        "--models_to_train", models_to_train,
-                                       "--datasets", dataset_name + '.jsonl',
+                                       "--datasetId",
+                                       "{{ ti.xcom_pull(task_ids='save_dataset') }}",
                                        "--no_cache", 'false',
                                        "--gpu", 'false',
                                        "--autopromote", 'true'],

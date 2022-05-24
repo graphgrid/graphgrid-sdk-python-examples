@@ -7,8 +7,7 @@ from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 class Pipeline:
 
-    def save_dataset(self, dataset_filepath: str, dataset_name: str,
-                     overwrite: bool):
+    def save_dataset(self, dataset_filepath: str, filename: str):
         sdk = GraphGridSdk()
 
         def read_by_line(dataset_filepath):
@@ -20,14 +19,15 @@ class Pipeline:
 
         yield_function = read_by_line(dataset_filepath)
         dataset_response: SaveDatasetResponse = sdk.save_dataset(yield_function,
-                                                                 dataset_name,
-                                                                 overwrite)
+                                                                 filename)
         if dataset_response.status_code != 200:
             raise Exception("Failed to save dataset: ",
                             dataset_response.exception)
 
+        return dataset_response.datasetId
+
     def train_and_promote(self, models_to_train: list,
-                          datasets: typing.Union[str, list],
+                          datasetId: str,
                           no_cache: typing.Optional[bool],
                           gpu: typing.Optional[bool], autopromote: bool):
         sdk = GraphGridSdk()
@@ -38,7 +38,7 @@ class Pipeline:
         def failed_handler(args):
             return
 
-        sdk.nmt_train_pipeline(models_to_train, datasets, no_cache, gpu,
+        sdk.nmt_train_pipeline(models_to_train, datasetId, no_cache, gpu,
                                autopromote, success_handler, failed_handler)
 
 
