@@ -1,5 +1,4 @@
 import typing
-import os
 
 import boto3
 import fire
@@ -7,27 +6,21 @@ from graphgrid_sdk.ggcore.sdk_messages import SaveDatasetResponse
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 
-
-
 class Pipeline:
 
-    def download_dataset(self, access_key: str, secret_access_key: str, bucket: str, dataset_key: str, endpoint_url: str):
-        s3 = boto3.client('s3', endpoint_url=endpoint_url, aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
-        s3.download_file(bucket, dataset_key, os.path.join(os.getcwd(), "training_dataset.jsonl"))
-
-    def save_dataset(self, dataset_filepath: str, filename: str):
+    def save_dataset(self, access_key: str, secret_access_key: str, bucket: str, dataset_key: str, endpoint_url: str):
         sdk = GraphGridSdk()
 
-        def read_by_line(dataset_filepath):
-            infile = open(
-                dataset_filepath,
-                'r', encoding='utf8')
-            for line in infile:
-                yield line.encode()
+        s3 = boto3.client('s3', endpoint_url=endpoint_url, aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
 
-        yield_function = read_by_line(dataset_filepath)
+        def read_dataset():
+            data = s3.get_object(Bucket=bucket, Key=dataset_key)
+            contents = data['Body'].read()
+            return contents.decode("utf-8")
+
+        yield_function = read_dataset()
         dataset_response: SaveDatasetResponse = sdk.save_dataset(yield_function,
-                                                                 filename)
+                                                                 "training_dataset.jsonl")
         if dataset_response.status_code != 200:
             raise Exception("Failed to save dataset: ",
                             dataset_response.exception)

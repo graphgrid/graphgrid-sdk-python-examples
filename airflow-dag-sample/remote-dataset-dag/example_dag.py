@@ -7,7 +7,7 @@ from graphgrid_provider.operators.graphgrid_docker import \
 
 DOCKER_URL = "tcp://socat:2375"
 SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
-dataset_filepath = '../embedded-dataset-dag/dataset_example.jsonl'
+dataset_filepath = "{{ ti.xcom_pull(task_ids='download_dataset') }}"
 access_key = "minio"
 secret_access_key = "minio123"
 filename = 'sample_dataset'
@@ -68,29 +68,18 @@ def delete_volume(claim_name: str) -> None:
 t_create_volume = PythonOperator(python_callable=create_volume,
                                  task_id='create_volume', dag=dag)
 
-t_0 = GraphGridDockerOperator(task_id='download_dataset',
-                              dag=dag,
-                              mounts=[GraphGridMount(target="/volumes/",
-                                                     source=SOURCE)],
-                              image="graphgrid-sdk-python-examples",
-                              command=["download_dataset",
-                                       "--access_key", access_key,
-                                       "--secret_access_key", secret_access_key,
-                                       "--bucket", "com-graphgrid-datasets",
-                                       "--dataset_key",
-                                       "4l1heG30Et7NFUMO6ZCvphPhbzsvQKfvuBTWh4GGjntL/sample_dataset.jsonl",
-                                       "--endpoint_url", "http://minio:9000"],
-                              auto_remove=True,
-                              )
-
 t_1 = GraphGridDockerOperator(task_id='save_dataset',
                               dag=dag,
                               mounts=[GraphGridMount(target="/volumes/",
                                                      source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
                               command=["save_dataset",
-                                       "--dataset_filepath", dataset_filepath,
-                                       "--filename", filename],
+                                       "--access_key", access_key,
+                                       "--secret_access_key", secret_access_key,
+                                       "--bucket", "com-graphgrid-datasets",
+                                       "--dataset_key",
+                                       "4l1heG30Et7NFUMO6ZCvphPhbzsvQKfvuBTWh4GGjntL/sample_dataset.jsonl",
+                                       "--endpoint_url", "http://minio:9000"],
                               auto_remove=True,
                               )
 
@@ -114,7 +103,6 @@ t_delete_volume = PythonOperator(python_callable=delete_volume,
                                  dag=dag, op_kwargs={"claim_name": SOURCE},
                                  trigger_rule="all_done")
 
-t_0.set_upstream(t_create_volume)
-t_1.set_upstream(t_0)
+t_1.set_upstream(t_create_volume)
 t_2.set_upstream(t_1)
 t_delete_volume.set_upstream(t_2)
