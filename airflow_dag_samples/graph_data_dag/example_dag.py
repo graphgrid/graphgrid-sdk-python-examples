@@ -10,7 +10,7 @@ SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
 dataset_filepath = '../embedded_dataset_dag/dataset_example.jsonl'
 access_key = "minio"
 secret_access_key = "minio123"
-filename = 'sample_dataset'
+# filename = 'sample_dataset'
 models_to_train = '["named_entity_recognition"]'
 
 
@@ -83,8 +83,7 @@ t_1 = GraphGridDockerOperator(task_id='save_dataset',
                                                      source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
                               command=["save_dataset",
-                                       "--nodes", "{{ ti.xcom_pull(task_ids='run_ongdb_query') }}",
-                                       "--filename", filename],
+                                       "--filename", "{{ ti.xcom_pull(task_ids='run_ongdb_query') }}"],
                               auto_remove=True,
                               )
 
