@@ -15,10 +15,10 @@ LABEL_MAP = {
     "MISCELLANEOUS": "MISC"
 }
 
-POS_PUNCTUATION = ['.', '"', ',', '(', ')', ':', '$', "''"]
-
-
 class Pipeline:
+
+    def __init__(self):
+        pass
 
     @staticmethod
     def add_whitespace_to_punctuation(text):
@@ -49,46 +49,6 @@ class Pipeline:
                 output = output + char
             i += 1
         return output
-
-    @staticmethod
-    def combine_coreference(extracted_coreference_pronoun_nodes, extracted_coreference_mention_nodes, sentence_1):
-
-        combined_coref = []
-
-        s2s = []
-
-        for cp_node in extracted_coreference_pronoun_nodes:
-            sentence_text = cp_node.get("s2").get("sentence")
-            s1_entity = cp_node.get("mo1")
-            if sentence_text not in s2s:
-                s2s.append(sentence_text)
-                combined_coref.append({"sentence_2": sentence_text, "references": [{"sentence_1_entity": s1_entity.get("value"),
-                                       "sentence_2_entity": sentence_1.split(' ')[cp_node.get("coref").get("index")], "coreferent": True,
-                                       "sentence_1_entity_loc": s1_entity.get("index"), "sentence_2_entity_loc": cp_node.get("coref").get("index")}]})
-            else:
-                combined_coref[s2s.index(sentence_text)]["references"].append({"sentence_1_entity": s1_entity.get("value"),
-                                       "sentence_2_entity": sentence_1.split(' ')[cp_node.get("coref").get("index")], "coreferent": True,
-                                       "sentence_1_entity_loc": s1_entity.get("index"), "sentence_2_entity_loc": cp_node.get("coref").get("index")})
-
-        for cm_node in extracted_coreference_mention_nodes:
-            sentence_text = cm_node.get("s2").get("sentence")
-            s1_entity = cm_node.get("mo1")
-            s2_entity = cm_node.get("mo2")
-            if sentence_text not in s2s:
-                s2s.append(sentence_text)
-                combined_coref.append({"sentence_2": sentence_text, "references": [{"sentence_1_entity": s1_entity.get("value"),
-                                       "sentence_2_entity": s2_entity.get("value"), "coreferent": True,
-                                       "sentence_1_entity_loc": s1_entity.get("index"), "sentence_2_entity_loc": s2_entity.get("index")}]})
-            else:
-                combined_coref[s2s.index(sentence_text)]["references"].append({"sentence_1_entity": s1_entity.get("value"),
-                                       "sentence_2_entity": s2_entity.get("value"), "coreferent": True,
-                                       "sentence_1_entity_loc": s1_entity.get("index"), "sentence_2_entity_loc": s2_entity.get("index")})
-
-        return combined_coref
-
-    @staticmethod
-    def add_negative_coreference_data(combined_coref, mo_nodes):
-
 
     @staticmethod
     def get_ner_list(sentence, mentions):
@@ -146,15 +106,12 @@ class Pipeline:
 
         article_gql = 'MATCH (article:Article)-[hat:HAS_ANNOTATED_TEXT]->(at:AnnotatedText) WHERE article.language="en" RETURN at'
         sentence_gql = 'MATCH (at:AnnotatedText)-[cs:CONTAINS_SENTENCE]->(sentence:Sentence) WHERE at.grn=$at_grn RETURN sentence'
-        sentiment_gql = 'MATCH (sentence:Sentence)-[hs:HAS_SENTIMENT]->(sentiment:SentenceSentiment) WHERE sentence.grn=$s_grn RETURN sentiment'
         translation_language_gql = 'MATCH (origArticle:Article)-[ht:HAS_TRANSLATION]->(enArticle:Article)-[hat:HAS_ANNOTATED_TEXT]->(at:AnnotatedText) WHERE at.grn = $at_grn RETURN origArticle'
         translation_gql = 'MATCH (origSentence:Sentence)-[ts:TRANSLATED_SENTENCE]->(englishSentence:Sentence) WHERE englishSentence.grn=$s_grn RETURN origSentence'
         mention_gql = 'MATCH (sentence:Sentence)-[hm:HAS_MENTION]->(mention:Mention) WHERE sentence.grn=$s_grn RETURN mention'
         keyphrase_gql = 'MATCH (sentence:Sentence)-[hk:HAS_KEYPHRASE]->(keyphrase:Keyphrase) WHERE sentence.grn=$s_grn RETURN keyphrase'
-        # re_gql = 'MATCH (m1:Mention)-[relationship]->(m2:Mention) WHERE m1.grn=$m1_grn AND m2.grn=$m2_grn RETURN relationship'
         re_gql = 'MATCH (m1:Mention)-[relationship]->(m2:Mention) WHERE m1.grn=$m1_grn AND m2.grn=$m2_grn AND relationship.sentenceGrn=$s_grn RETURN relationship'
 
-        # with neo4j.GraphDatabase.driver('bolt://localhost:7687', auth=(
         with neo4j.GraphDatabase.driver('bolt://ongdb:7687', auth=(
                 'ongdb',
                 'admin')) as local_driver, local_driver.session() as local_session:
@@ -199,7 +156,6 @@ class Pipeline:
                                 relations.append({"obj": {"entity": m2.get("value"), "type": self.convert_labels(m2.get("ne")[0])}, "sub": {"entity": m1.get("value"), "type": self.convert_labels(m1.get("ne")[0])}, "relation": relationship.get("type")})
                     sentence_text = sentence.get("sentence").get("sentence")
                     sentence_text = self.add_whitespace_to_punctuation(sentence_text)
-                    # split_sentence = sentence_text.strip().split(' ')
                     mentions = [mention.get("mention") for mention in extracted_mention_nodes]
                     sentence_json["sentence"] = sentence_text
                     if translated_text:
@@ -207,11 +163,9 @@ class Pipeline:
                         sentence_json["translations"][orig_language] = extracted_translation_nodes[0].get("origSentence").get("sentence")
                     sentence_json["keyphrases"] = [keyphrase.get("keyphrase").get("keyphraseId") for keyphrase in extracted_keyphrase_nodes]
                     sentence_json["named_entity"] = self.get_ner_list(sentence_text, mentions)
-                    sentence_json["pos"] = sentence.get("sentence").get("posTags")
                     sentence_json["relations"] = relations
 
                     with open(os.path.join('/volumes', filename), 'a+', encoding='utf-8') as f:
-                    # with open(filename, 'a+', encoding='utf-8') as f:
                         f.write(json.dumps(sentence_json))
                         f.write('\n')
 
