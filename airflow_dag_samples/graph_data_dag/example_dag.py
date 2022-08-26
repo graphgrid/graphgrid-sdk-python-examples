@@ -87,20 +87,20 @@ t_1 = GraphGridDockerOperator(task_id='save_dataset',
                               auto_remove=True,
                               )
 
-t_2 = GraphGridDockerOperator(task_id='train_and_promote',
-                              dag=dag,
-                              mounts=[GraphGridMount(target="/volumes/",
-                                                     source=SOURCE)],
-                              image="graphgrid-sdk-python-examples",
-                              command=["train_and_promote",
-                                       "--models_to_train", models_to_train,
-                                       "--datasetId",
-                                       "{{ ti.xcom_pull(task_ids='save_dataset') }}",
-                                       "--no_cache", 'false',
-                                       "--gpu", 'false',
-                                       "--autopromote", 'true'],
-                              auto_remove=True,
-                              )
+# t_2 = GraphGridDockerOperator(task_id='train_and_promote',
+#                               dag=dag,
+#                               mounts=[GraphGridMount(target="/volumes/",
+#                                                      source=SOURCE)],
+#                               image="graphgrid-sdk-python-examples",
+#                               command=["train_and_promote",
+#                                        "--models_to_train", models_to_train,
+#                                        "--datasetId",
+#                                        "{{ ti.xcom_pull(task_ids='save_dataset') }}",
+#                                        "--no_cache", 'false',
+#                                        "--gpu", 'false',
+#                                        "--autopromote", 'true'],
+#                               auto_remove=True,
+#                               )
 
 t_delete_volume = PythonOperator(python_callable=delete_volume,
                                  task_id='delete_volume',
@@ -109,5 +109,5 @@ t_delete_volume = PythonOperator(python_callable=delete_volume,
 
 t_0.set_upstream(t_create_volume)
 t_1.set_upstream(t_0)
-t_2.set_upstream(t_1)
-t_delete_volume.set_upstream(t_2)
+# t_2.set_upstream(t_1)
+t_delete_volume.set_upstream(t_1)
