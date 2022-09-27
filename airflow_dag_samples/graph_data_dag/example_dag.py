@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from docker import APIClient
@@ -83,7 +84,8 @@ t_1 = GraphGridDockerOperator(task_id='save_dataset',
                                                      source=SOURCE)],
                               image="graphgrid-sdk-python-examples",
                               command=["save_dataset",
-                                       "--filename", "{{ ti.xcom_pull(task_ids='run_ongdb_query') }}"],
+                                       "--filename",
+                                       "{{ ti.xcom_pull(task_ids='run_ongdb_query') }}"],
                               auto_remove=True,
                               )
 

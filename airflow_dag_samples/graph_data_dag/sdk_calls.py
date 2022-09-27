@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import typing
 import unicodedata
 
@@ -14,6 +14,7 @@ LABEL_MAP = {
     "PERSON": "PER",
     "MISCELLANEOUS": "MISC"
 }
+
 
 class Pipeline:
 
@@ -66,26 +67,27 @@ class Pipeline:
                 for j in range(mention_length):
                     # If the sentence has only part of the mention, ignore it.
                     try:
-                        if split_sentence[i+j] != split_mention[j]:
+                        if split_sentence[i + j] != split_mention[j]:
                             i = i + 1
                             break
                     except IndexError:
                         i = i + 1
                         break
-                    if j == mention_length-1:
+                    if j == mention_length - 1:
                         # If the previous word has the same label, differentiate the current mention with "B-"
-                        if ner_list[i-1] != 'I-' + ner_label or i == 0:
+                        if ner_list[i - 1] != 'I-' + ner_label or i == 0:
                             for k in range(mention_length):
-                                ner_list[i+k] = 'I-'+ner_label
+                                ner_list[i + k] = 'I-' + ner_label
                             i = i + mention_length
                         else:
                             for k in range(mention_length):
-                                ner_list[i+k] = 'B-' + ner_label
+                                ner_list[i + k] = 'B-' + ner_label
                             i = i + mention_length
         return ner_list
 
     @staticmethod
-    def extract_node_properties(data: typing.List[typing.Dict]) -> typing.List[typing.Dict]:
+    def extract_node_properties(data: typing.List[typing.Dict]) -> typing.List[
+        typing.Dict]:
         nodes = []
         for datapoint in data:
             intermediary_dict = {}
@@ -115,33 +117,47 @@ class Pipeline:
         with neo4j.GraphDatabase.driver('bolt://ongdb:7687', auth=(
                 'ongdb',
                 'admin')) as local_driver, local_driver.session() as local_session:
-            annotated_text_results: neo4j.BoltStatementResult = local_session.run(article_gql)
+            annotated_text_results: neo4j.BoltStatementResult = local_session.run(
+                article_gql)
             annotated_text_nodes = annotated_text_results.data('at')
-            extracted_at_nodes = self.extract_node_properties(annotated_text_nodes)
+            extracted_at_nodes = self.extract_node_properties(
+                annotated_text_nodes)
             for at in extracted_at_nodes:
                 at_grn = at.get("at").get("grn")
                 translated_text = False
-                translation_language_results: neo4j.BoltStatementResult = local_session.run(translation_language_gql, {"at_grn": at_grn})
-                translation_language_nodes = translation_language_results.data('origArticle')
-                extracted_translation_language_nodes = self.extract_node_properties(translation_language_nodes)
+                translation_language_results: neo4j.BoltStatementResult = local_session.run(
+                    translation_language_gql, {"at_grn": at_grn})
+                translation_language_nodes = translation_language_results.data(
+                    'origArticle')
+                extracted_translation_language_nodes = self.extract_node_properties(
+                    translation_language_nodes)
                 if len(extracted_translation_language_nodes) > 0:
                     translated_text = True
-                    orig_language = extracted_translation_language_nodes[0].get("origArticle").get("language")
-                sentence_results: neo4j.BoltStatementResult = local_session.run(sentence_gql, {"at_grn": at_grn})
+                    orig_language = extracted_translation_language_nodes[0].get(
+                        "origArticle").get("language")
+                sentence_results: neo4j.BoltStatementResult = local_session.run(
+                    sentence_gql, {"at_grn": at_grn})
                 sentence_nodes = sentence_results.data('sentence')
-                extracted_sentence_nodes = self.extract_node_properties(sentence_nodes)
+                extracted_sentence_nodes = self.extract_node_properties(
+                    sentence_nodes)
                 for sentence in extracted_sentence_nodes:
                     sentence_json = {}
                     s_grn = sentence.get("sentence").get("grn")
-                    translation_results: neo4j.BoltStatementResult = local_session.run(translation_gql, {"s_grn": s_grn})
+                    translation_results: neo4j.BoltStatementResult = local_session.run(
+                        translation_gql, {"s_grn": s_grn})
                     translation_nodes = translation_results.data('origSentence')
-                    extracted_translation_nodes = self.extract_node_properties(translation_nodes)
-                    keyphrase_results: neo4j.BoltStatementResult = local_session.run(keyphrase_gql, {"s_grn": s_grn})
+                    extracted_translation_nodes = self.extract_node_properties(
+                        translation_nodes)
+                    keyphrase_results: neo4j.BoltStatementResult = local_session.run(
+                        keyphrase_gql, {"s_grn": s_grn})
                     keyphrase_nodes = keyphrase_results.data('keyphrase')
-                    extracted_keyphrase_nodes = self.extract_node_properties(keyphrase_nodes)
-                    mention_results: neo4j.BoltStatementResult = local_session.run(mention_gql, {"s_grn": s_grn})
+                    extracted_keyphrase_nodes = self.extract_node_properties(
+                        keyphrase_nodes)
+                    mention_results: neo4j.BoltStatementResult = local_session.run(
+                        mention_gql, {"s_grn": s_grn})
                     mention_nodes = mention_results.data('mention')
-                    extracted_mention_nodes = self.extract_node_properties(mention_nodes)
+                    extracted_mention_nodes = self.extract_node_properties(
+                        mention_nodes)
                     relations = []
                     for i in range(len(extracted_mention_nodes)):
                         m1 = extracted_mention_nodes[i].get("mention")
@@ -149,23 +165,43 @@ class Pipeline:
                         for j in range(len(extracted_mention_nodes)):
                             m2 = extracted_mention_nodes[j].get("mention")
                             m2_grn = m2.get("grn")
-                            relation_results: neo4j.BoltStatementResult = local_session.run(re_gql, {"m1_grn": m1_grn, "m2_grn": m2_grn, "s_grn": s_grn})
-                            re_relationships = relation_results.data("relationship")
-                            extracted_re_relationships = self.extract_node_properties(re_relationships)
+                            relation_results: neo4j.BoltStatementResult = local_session.run(
+                                re_gql, {"m1_grn": m1_grn, "m2_grn": m2_grn,
+                                         "s_grn": s_grn})
+                            re_relationships = relation_results.data(
+                                "relationship")
+                            extracted_re_relationships = self.extract_node_properties(
+                                re_relationships)
                             for relationship in extracted_re_relationships:
-                                relations.append({"obj": {"entity": m2.get("value"), "type": self.convert_labels(m2.get("ne")[0])}, "sub": {"entity": m1.get("value"), "type": self.convert_labels(m1.get("ne")[0])}, "relation": relationship.get("type")})
+                                relations.append({"obj": {
+                                    "entity": m2.get("value"),
+                                    "type": self.convert_labels(
+                                        m2.get("ne")[0])}, "sub": {
+                                    "entity": m1.get("value"),
+                                    "type": self.convert_labels(
+                                        m1.get("ne")[0])},
+                                                  "relation": relationship.get(
+                                                      "type")})
                     sentence_text = sentence.get("sentence").get("sentence")
-                    sentence_text = self.add_whitespace_to_punctuation(sentence_text)
-                    mentions = [mention.get("mention") for mention in extracted_mention_nodes]
+                    sentence_text = self.add_whitespace_to_punctuation(
+                        sentence_text)
+                    mentions = [mention.get("mention") for mention in
+                                extracted_mention_nodes]
                     sentence_json["sentence"] = sentence_text
                     if translated_text:
                         sentence_json["translations"] = {}
-                        sentence_json["translations"][orig_language] = extracted_translation_nodes[0].get("origSentence").get("sentence")
-                    sentence_json["keyphrases"] = [keyphrase.get("keyphrase").get("keyphraseId") for keyphrase in extracted_keyphrase_nodes]
-                    sentence_json["named_entity"] = self.get_ner_list(sentence_text, mentions)
+                        sentence_json["translations"][orig_language] = \
+                        extracted_translation_nodes[0].get("origSentence").get(
+                            "sentence")
+                    sentence_json["keyphrases"] = [
+                        keyphrase.get("keyphrase").get("keyphraseId") for
+                        keyphrase in extracted_keyphrase_nodes]
+                    sentence_json["named_entity"] = self.get_ner_list(
+                        sentence_text, mentions)
                     sentence_json["relations"] = relations
 
-                    with open(os.path.join('/volumes', filename), 'a+', encoding='utf-8') as f:
+                    with open(os.path.join('/volumes', filename), 'a+',
+                              encoding='utf-8') as f:
                         f.write(json.dumps(sentence_json))
                         f.write('\n')
 
@@ -213,18 +249,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
