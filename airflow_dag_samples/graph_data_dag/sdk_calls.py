@@ -55,7 +55,7 @@ class Pipeline:
     def get_ner_list(sentence, mentions):
         split_sentence = sentence.strip().split(" ")
         sentence_length = len(split_sentence)
-        ner_list = ["0"] * sentence_length
+        ner_list = ["O"] * sentence_length
         # Find each mention in the sentence, put the mention labels at those indexes in ner_list
         for mention in mentions:
             ner_label = LABEL_MAP[mention.get("ne")[0]]
@@ -188,7 +188,7 @@ class Pipeline:
                     mentions = [mention.get("mention") for mention in
                                 extracted_mention_nodes]
                     sentence_json["sentence"] = sentence_text
-                    if translated_text:
+                    if translated_text and len(extracted_translation_nodes) > 0:
                         sentence_json["translations"] = {}
                         sentence_json["translations"][orig_language] = \
                         extracted_translation_nodes[0].get("origSentence").get(
