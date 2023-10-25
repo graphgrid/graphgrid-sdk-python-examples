@@ -12,11 +12,12 @@ git clone https://github.com/graphgrid/graphgrid-sdk-python-examples.git
 The next step is to start running a local CDP deployment.
 
 Download CDP ai-edition (version 2.0) from https://www.graphgrid.com/cdp-downloads/
-and visit https://docs.graphgrid.com/2.0/#/ for more information.
+and visit https://docs.graphgrid.com/ for more information.
 
 # Build DAG docker image
 We need to build a docker image based on our dockerfile. 
-This image is what Airflow uses when the DAG is triggered.   
+This image is what Airflow uses when the DAG is triggered.
+Be sure to `COPY` the necessary files for your DAG.
 
 ```bash
 docker build -t graphgrid-sdk-python-examples .
@@ -46,20 +47,17 @@ From the home screen you should see your custom DAG (`train_model_with_sdk`) and
 You can manually trigger your custom DAG by hitting the arrow under the `Actions` column.
 
 You can monitor the jobs manually through the Airflow Webserver, 
-or you can learn about how to use the [**GraphGrid SDK**](https://docs.graphgrid.com/2.0/#/) to programmatically monitor and interact with your model trainings.
+or you can learn about how to use the [**GraphGrid SDK**](https://docs.graphgrid.com/2.0/) to programmatically monitor and interact with your model trainings.
 
 
 # Done!
 
-Following these steps you will have trained two new models,
-a named entity recognition (ner) model and a part-of-speech tagging (pos) model.
+Following these steps you will have trained the model(s) specified within your DAG using GraphGrid's NLP model training service.
 
-
-
-These can be loaded in and used with the NLP Module of CDP.
+These trained models can be loaded in and used with the NLP Module of CDP.
 
 
 # Visit the GraphGrid Docs site
 
-Visit the [**GraphGrid docs site**](https://docs.graphgrid.com/2.0/#/) for more detailed information 
+Visit the [**GraphGrid docs site**](https://docs.graphgrid.com/) for more detailed information 
 on running your custom NLP model training jobs and learning about the CDP platform.

@@ -10,7 +10,7 @@ DOCKER_URL = "tcp://socat:2375"
 SOURCE = "{{ ti.xcom_pull(task_ids='create_volume') }}"
 dataset_filepath = 'dataset_example.jsonl'
 filename = 'sample_dataset'
-models_to_train = '["named_entity_recognition"]'
+models_to_train = '["NAMED_ENTITY_RECOGNITION"]'
 
 
 def read_by_line():
@@ -85,7 +85,7 @@ t_2 = GraphGridDockerOperator(task_id='train_and_promote',
                               image="graphgrid-sdk-python-examples",
                               command=["train_and_promote",
                                        "--models_to_train", models_to_train,
-                                       "--datasetId",
+                                       "--dataset_id",
                                        "{{ ti.xcom_pull(task_ids='save_dataset') }}",
                                        "--no_cache", 'false',
                                        "--gpu", 'false',

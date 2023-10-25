@@ -4,6 +4,7 @@ from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
 from graphgrid_sdk.ggcore.sdk_messages import NMTStatusResponse, \
     NMTTrainResponse, SaveDatasetResponse, PromoteModelResponse
 from graphgrid_sdk.ggcore.sdk_messages import TrainRequestBody
+from graphgrid_sdk.ggcore.utils import NlpModel
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 
@@ -28,16 +29,16 @@ sdk = GraphGridSdk(bootstrap_conf)
 
 # Save training dataset (streamed)
 dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line(),
-                                                         "sample-dataset",
-                                                         overwrite=True)
+                                                         "sample-dataset")
 
 # Train new models
-ner_training_request_body: TrainRequestBody = TrainRequestBody(model="named-entity-recognition",
-                                                               datasets="sample-dataset.jsonl",
-                                                               no_cache=False, GPU=False)
-pos_training_request_body: TrainRequestBody = TrainRequestBody(model="pos-tagging", datasets="sample-dataset.jsonl",
+ner_training_request_body: TrainRequestBody = TrainRequestBody(model=NlpModel.NAMED_ENTITY_RECOGNITION,
+                                                               dataset_id=dataset_response.dataset_id,
+                                                               no_cache=False, gpu=False)
+pos_training_request_body: TrainRequestBody = TrainRequestBody(model=NlpModel.PART_OF_SPEECH_TAGGING,
+                                                               dataset_id=dataset_response.dataset_id,
                                                                no_cache=False,
-                                                               GPU=False)
+                                                               gpu=False)
 
 ner_train_response: NMTTrainResponse = sdk.nmt_train(ner_training_request_body)
 time.sleep(2)  # a temp directory is created for each run with name based on timestamp.

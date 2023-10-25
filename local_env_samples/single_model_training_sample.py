@@ -4,6 +4,7 @@ from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
 from graphgrid_sdk.ggcore.sdk_messages import NMTStatusResponse, \
     NMTTrainResponse, SaveDatasetResponse, PromoteModelResponse
 from graphgrid_sdk.ggcore.sdk_messages import TrainRequestBody
+from graphgrid_sdk.ggcore.utils import NlpModel
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 
@@ -28,13 +29,12 @@ sdk = GraphGridSdk(bootstrap_conf)
 
 # Save training dataset (streamed)
 dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line(),
-                                                         "sample-dataset",
-                                                         overwrite=True)
+                                                         "sample-dataset")
 
 # Train a new model
-training_request_body: TrainRequestBody = TrainRequestBody(model="named-entity-recognition",
-                                                           datasets="sample-dataset.jsonl",
-                                                           no_cache=False, GPU=False)
+training_request_body: TrainRequestBody = TrainRequestBody(model=NlpModel.NAMED_ENTITY_RECOGNITION,
+                                                           dataset_id=dataset_response.dataset_id,
+                                                           no_cache=False, gpu=False)
 train_response: NMTTrainResponse = sdk.nmt_train(training_request_body)
 
 # Track training status
