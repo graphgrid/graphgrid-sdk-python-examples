@@ -47,7 +47,7 @@ From the home screen you should see your custom DAG (`train_model_with_sdk`) and
 You can manually trigger your custom DAG by hitting the arrow under the `Actions` column.
 
 You can monitor the jobs manually through the Airflow Webserver, 
-or you can learn about how to use the [**GraphGrid SDK**](https://docs.graphgrid.com/2.0/) to programmatically monitor and interact with your model trainings.
+or you can learn about how to use the [**GraphGrid SDK**](https://docs.graphgrid.com/) to programmatically monitor and interact with your model trainings.
 
 
 # Done!
