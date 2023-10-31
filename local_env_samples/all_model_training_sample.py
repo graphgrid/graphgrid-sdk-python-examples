@@ -3,6 +3,7 @@ import time
 from graphgrid_sdk.ggcore.config import SdkBootstrapConfig
 from graphgrid_sdk.ggcore.sdk_messages import SaveDatasetResponse
 from graphgrid_sdk.ggcore.sdk_messages import TrainRequestBody
+from graphgrid_sdk.ggcore.utils import NlpModel
 from graphgrid_sdk.ggsdk.sdk import GraphGridSdk
 
 
@@ -16,8 +17,9 @@ def read_by_line():
 
 
 # List all models available in the dataset to be trained
-models_to_train = ["translation", "sentiment-binary", "sentiment-categorical", "keyphrase-extraction",
-                   "named-entity-recognition", "pos-tagging", "relation-extraction", "coreference-resolution"]
+models_to_train = [NlpModel.TRANSLATION, NlpModel.SENTIMENT_ANALYSIS_BINARY, NlpModel.SENTIMENT_ANALYSIS_CATEGORICAL,
+                   NlpModel.KEYPHRASE_EXTRACTION, NlpModel.NAMED_ENTITY_RECOGNITION, NlpModel.PART_OF_SPEECH_TAGGING,
+                   NlpModel.RELATION_EXTRACTION, NlpModel.COREFERENCE_RESOLUTION]
 num_models = len(models_to_train)
 
 # Setup bootstrap config
@@ -32,14 +34,13 @@ sdk = GraphGridSdk(bootstrap_conf)
 
 # Save training dataset (streamed)
 dataset_response: SaveDatasetResponse = sdk.save_dataset(read_by_line(),
-                                                         "sample-dataset",
-                                                         overwrite=True)
+                                                         "sample-dataset")
 
 # Train new models
 train_request_bodies = []
 for model in models_to_train:
     train_request_bodies.append(
-        TrainRequestBody(model=model, datasets="sample-dataset.jsonl", no_cache=False, GPU=False))
+        TrainRequestBody(model=model, dataset_id=dataset_response.dataset_id, no_cache=False, gpu=False))
 
 nmt_train_responses = []
 for i in range(num_models):

@@ -225,10 +225,10 @@ class Pipeline:
             raise Exception("Failed to save dataset: ",
                             dataset_response.exception)
 
-        return dataset_response.datasetId
+        return dataset_response.dataset_id
 
     def train_and_promote(self, models_to_train: list,
-                          datasetId: str,
+                          dataset_id: str,
                           no_cache: typing.Optional[bool],
                           gpu: typing.Optional[bool], autopromote: bool):
         sdk = GraphGridSdk()
@@ -239,7 +239,7 @@ class Pipeline:
         def failed_handler(args):
             return
 
-        sdk.nmt_train_pipeline(models_to_train, datasetId, no_cache, gpu,
+        sdk.nmt_train_pipeline(models_to_train, dataset_id, no_cache, gpu,
                                autopromote, success_handler, failed_handler)
 
 
